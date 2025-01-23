@@ -1,0 +1,158 @@
+package test;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Test {
+    public static void main(String[] args) {
+        // File location for the CSV
+        String file = "src\\Reformatted(Sheet1) (8).csv";
+        
+        BufferedReader reader = null; // Used to read the file
+        String line; // Holds each line of the file
+
+        // Separate lists for categories
+        List<String[]> noEvent = new ArrayList<>();
+        List<String[]> declamation = new ArrayList<>();
+        List<String[]> dramaticInterpretation = new ArrayList<>();
+        List<String[]> lincolnDouglas = new ArrayList<>();
+        List<String[]> extemp = new ArrayList<>();
+        List<String[]> prose = new ArrayList<>();
+        List<String[]> otherEvents = new ArrayList<>();
+
+        try {
+            // Open the file for reading
+            reader = new BufferedReader(new FileReader(file));
+
+            // Read the file one line at a time
+            while ((line = reader.readLine()) != null) {
+            	
+                // Split the line into parts, separated by commas
+                String[] row = line.split(",");
+
+                // Check if the row is missing an event or if it's blank
+                if (row.length < 2 || row[1].trim().isEmpty()) {
+                    noEvent.add(row); // Add to "No Event" category
+                } else {
+                	
+                    // Get the event name and trim any extra spaces
+                    String event = row[1].trim().toLowerCase();
+
+                    // Use exact matching to categorize events
+                    if (event.equals("declamation")) {
+                        declamation.add(row);
+                    } else if (event.equals("dramatic interpretation")) {
+                        dramaticInterpretation.add(row);
+                    } else if (event.equals("lincoln douglas debate")) {
+                        lincolnDouglas.add(row);
+                    } else if (event.equals("extemporaneous speaking")) {
+                        extemp.add(row);
+                    } else if (event.equals("oral interpretation of prose")) {
+                        prose.add(row);
+                    } else {
+                        otherEvents.add(row); 
+                        // Any unrecognized events go here
+                    }
+                }
+            }
+
+            // Print and split all categories into rooms, except for "No Event" and "Other Events"
+            splitAndPrint("Declamation", declamation);
+            splitAndPrint("Dramatic Interpretation", dramaticInterpretation);
+            splitAndPrint("Lincoln Douglas Debate", lincolnDouglas);
+            splitAndPrint("Extemporaneous Speaking", extemp);
+            splitAndPrint("Oral Interpretation of Prose", prose);
+
+            // Print "No Event" and "Other Events" as a single list
+            printCategory("No Event", noEvent);
+            printCategory("Other Events", otherEvents);
+
+        } catch (Exception e) {
+            // Print an error message if something goes wrong
+            e.printStackTrace();
+        } finally {
+            try {
+                if (reader != null) {
+                    reader.close(); // Close the file when we're done
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Combined method to print and split rooms for each category
+    private static void splitAndPrint(String categoryName, List<String[]> rows) {
+        System.out.println("================================================================================");
+        System.out.println("Category: " + categoryName);
+        System.out.println("================================================================================");
+        
+        if (rows.isEmpty()) {
+            System.out.println("No participants found for this category.\n");
+        } else {
+            printCategory(categoryName, rows); // Pass both the category name and the rows
+            splitIntoRoomsEvenly(categoryName, rows);
+        }
+    }
+
+    // Helper method to print a category
+    private static void printCategory(String categoryName, List<String[]> rows) {
+        System.out.println("================================================================================");
+        System.out.println("Category: " + categoryName);
+        System.out.println("================================================================================");
+        if (rows.isEmpty()) {
+            System.out.println("No participants found in this category.\n");
+            return;
+        }
+        System.out.printf("%-25s %-30s%n", "Name", "Event");
+        System.out.println("---------------------------------------------------------------------------------");
+        for (String[] row : rows) {
+            System.out.printf("%-25s %-30s%n", row[0].trim(), row.length > 1 ? row[1].trim() : "No Event");
+        }
+        System.out.println(); // Add a blank line between categories
+    }
+
+    // Method to split a category into evenly distributed rooms
+    private static void splitIntoRoomsEvenly(String categoryName, List<String[]> category) {
+        if (category.isEmpty()) {
+            return; // No need to split empty categories
+        }
+
+        System.out.println("Rooms for Event: " + categoryName);
+        System.out.println("--------------------------------------------------------------------------------");
+
+        int totalParticipants = category.size();
+        int numRooms = (totalParticipants + 5) / 6; // Calculate the number of rooms needed
+        int baseRoomSize = totalParticipants / numRooms; // Base size of each room
+        int extraParticipants = totalParticipants % numRooms; // Extra participants to distribute
+
+        int roomNumber = 1;
+        int currentIndex = 0;
+
+        for (int i = 0; i < numRooms; i++) {
+            int roomSize = baseRoomSize + (extraParticipants > 0 ? 1 : 0); // Add an extra participant if available
+            extraParticipants--;
+
+            List<String[]> currentRoom = new ArrayList<>();
+            for (int j = 0; j < roomSize; j++) {
+                currentRoom.add(category.get(currentIndex++));
+            }
+
+            printRoom(roomNumber++, currentRoom);
+        }
+    }
+
+    // Helper method to print a single room
+    private static void printRoom(int roomNumber, List<String[]> room) {
+        System.out.println("Room " + roomNumber + ":");
+        System.out.printf("%-25s %-30s%n", "Name", "Event");
+        System.out.println("--------------------------------------------------------------------------------");
+        for (String[] participant : room) {
+            System.out.printf("%-25s %-30s%n", participant[0].trim(), participant.length > 1 ? participant[1].trim() : "No Event");
+        }
+        System.out.println(); // Add a blank line after each room
+    }
+}
